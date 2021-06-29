@@ -14,8 +14,8 @@ def process_file(ctx):
 
 @task
 def export_to_csv(ctx):
-    pass
-    # file_handler.export_data_to_csv()
+    print("Exporting to csv...")
+    ctx.run("python src/main.py export")
 
 
 @task(pre=[process_file])

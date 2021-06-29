@@ -9,3 +9,5 @@ if __name__ == "__main__":
     if command == 'run':
         ip_processor = IP_Processor()
         ip_processor.start_process()
+    if command == 'export':
+        FilesHandler.export_data()

@@ -1,3 +1,4 @@
+import csv
 import re
 from mongodb import MongoDb
 from ip_processor import IP_Processor
@@ -43,3 +44,18 @@ class FilesHandler:
         """
         with open('./files/failed_ip_list.txt', 'a') as writer:
             writer.write(f"{ip} {reason}\n")
+
+    @staticmethod
+    def export_data():
+        persist = MongoDb()
+        ip_collection = persist.db.ips
+        ips = ip_collection.find({
+            "status": "processed"
+        })
+        ip_list = list(ips)
+        if len(ip_list) != 0:
+            keys = ip_list[0].keys()
+            with open('./files/ips.csv', 'w', newline='') as output_file:
+                dict_writer = csv.DictWriter(output_file, keys)
+                dict_writer.writeheader()
+                dict_writer.writerows(ip_list)
