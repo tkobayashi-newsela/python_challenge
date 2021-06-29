@@ -1,6 +1,11 @@
 import requests
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from mongodb import MongoDb
+
+
+class Fail_Processing(Exception):
+    pass
 
 
 class IP_Processor:
@@ -18,28 +23,45 @@ class IP_Processor:
         self.ip_collection = persist.db.ips
 
     def get_geoip_info(self, ip):
+        """"
+        Gets the geoip information.
+        Raises Fail_Processing in case status_code != 200
+        """
         response = requests.get(f'{self.geoip_url}/{ip}/')
         if response.status_code == 200:
             return response.json()
+        raise Fail_Processing(response.json())
 
     def get_rdap_info(self, ip):
+        """"
+        Gets the rdap information.
+        Raises Fail_Processing in case status_code != 200
+        """
         for url in self.rdap_url:
             response = requests.get(f'{url}{ip}/')
             if response.status_code == 200:
                 return response.json()
-            # if url == self.rdap_url[-1]:
+            if url == self.rdap_url[-1]:
+                raise Fail_Processing(response.json())
 
     def start_process(self):
+        """"
+        Starts the process of ip reading.
+        Uses 10 threads to maximize performance
+        """
         ip_list = self.ip_collection.find({
             "status": "waiting"
         })
-        with ThreadPoolExecutor(max_workers=5) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             executor.map(self.process_ip, list(ip_list))
 
     def check_ip_cache(self, ip):
-        processed_ip = self.ip_collection.find(
+        """"
+        Checks in the database if there already is information about the ip.
+        """
+        processed_ip = self.ip_collection.find_one(
             {
-                "ip": ip['ip'],
+                "ip": ip,
                 "status": "processed"
             }
         )
@@ -54,7 +76,11 @@ class IP_Processor:
         return False
 
     def process_ip(self, ip):
-        is_cached = self.check_ip_cache(ip)
+        """"
+        Process the ip. Gets the rdap and geoip information and saves
+        it in the database
+        """
+        is_cached = self.check_ip_cache(ip['ip'])
         if not is_cached:
             self.ip_collection.find_one_and_update(
                 {
@@ -66,17 +92,33 @@ class IP_Processor:
                     }
                 }
             )
-            rdap = self.get_rdap_info(ip['ip'])
-            geoip = self.get_geoip_info(ip['ip'])
-            self.ip_collection.find_one_and_update(
-                {
-                    "ip": ip["ip"]
-                },
-                {
-                    '$set': {
-                        'rdap': rdap,
-                        'geoip': geoip,
-                        'status': "processed"
+            try:
+                rdap = self.get_rdap_info(ip['ip'])
+                geoip = self.get_geoip_info(ip['ip'])
+                self.ip_collection.find_one_and_update(
+                    {
+                        "ip": ip["ip"]
+                    },
+                    {
+                        '$set': {
+                            'rdap': rdap,
+                            'geoip': geoip,
+                            'status': "processed"
+                        }
                     }
-                }
-            )
+                )
+            except Fail_Processing as e:
+                self.ip_collection.find_one_and_update(
+                    {
+                        "ip": ip["ip"]
+                    },
+                    {
+                        '$set': {
+                            'status': "failed"
+                        }
+                    }
+                )
+                ip = ip['ip']
+                logging.error(f"Fail processing ip {ip}")
+                from file_handler import FilesHandler
+                FilesHandler.write_failed_ip(ip, e)
