@@ -7,7 +7,7 @@ from each of the ip's.
 
 ## Installation
 
-To run this project it's necessary to have `Docker` and `Docker Compose` installed.
+To run this project, it's necessary to have `Docker` and `Docker Compose` installed.
 
 To install the dependencies, it's highly recommended to use python virtual env.
 
@@ -23,10 +23,25 @@ pip install -r requirements.txt
 
 ## Usage
 
-```python
-import foobar
+To interact with the python script, we are going to use invoke.
 
-foobar.pluralize('word') # returns 'words'
-foobar.pluralize('goose') # returns 'geese'
-foobar.singularize('phenomena') # returns 'phenomenon'
+To process the file the populate the database:
+```
+invoke process-file
+```
+
+To process the file and get the geoip and rdap information:
+```
+invoke run
+```
+
+To detroy the enviroment
+```
+invoke destroy
+```
+
+
+To export the data into a csv file
+```
+invoke export-to-csv
 ```
