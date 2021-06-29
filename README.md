@@ -25,10 +25,6 @@ pip install -r requirements.txt
 
 To interact with the python script, we are going to use invoke.
 
-To process the file and populate the database:
-```
-invoke process-file
-```
 
 To process the file and get the geoip and rdap information:
 ```
