@@ -45,3 +45,7 @@ To export the data into a csv file
 ```
 invoke export-to-csv
 ```
+
+## Caching
+
+To obtain the caching functionality, we use mongodb to store processed information. So before processing any ip, we check if that ip was already processed.
