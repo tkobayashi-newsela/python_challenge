@@ -11,7 +11,7 @@ To run this project it's necessary to have `Docker` and `Docker Compose` install
 
 To install the dependencies, it's highly recommended to use python virtual env.
 
-````
+```
 virtualenv -p python3 .venv
 ```
 
