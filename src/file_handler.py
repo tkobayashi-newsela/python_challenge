@@ -59,3 +59,4 @@ class FilesHandler:
                 dict_writer = csv.DictWriter(output_file, keys)
                 dict_writer.writeheader()
                 dict_writer.writerows(ip_list)
+        print("No data to export")

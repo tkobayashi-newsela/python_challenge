@@ -12,7 +12,8 @@ def process_file(ctx):
     print("Processing file...")
     ctx.run("python src/main.py process_file")
 
-@task
+
+@task(pre=[build_environment])
 def export_to_csv(ctx):
     print("Exporting to csv...")
     ctx.run("python src/main.py export")
